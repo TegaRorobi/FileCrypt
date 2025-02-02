@@ -39,3 +39,16 @@ For added security, even if an encryption key is stolen, the encryption key woul
 2. a 'users' app for anything involving users (which might be inherited from in the main app to add useful methods and functionality for the businesses, organisations, teams, etc.)
 3. another 'notifications' app for notifications, emails, text messages, etc.
 4. 
+
+
+## Functionality
+
+### Single user account
+
+- Signup
+- Have an interface to access their encrypted resources (their name tags would be there, and the type of the resource, whether it's a folder, image, text, etcetera)
+- Encrypt a resource which they upload.
+- Get the encryption key for that resource (the encryption keys are saved for the user account and they can recover the encryptionkey for any resource in case they lost it.)
+- They can send this encryption key to someone else, and they should be able to view the file(s) without having to sign up on the platform.
+- The person sharing a resource should provide a link to the resource (available on the dashboard) and then the key. When the viewer clicks on the link, they have to then enter the key to have access to the resource.
+
