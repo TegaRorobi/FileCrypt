@@ -52,3 +52,5 @@ For added security, even if an encryption key is stolen, the encryption key woul
 - They can send this encryption key to someone else, and they should be able to view the file(s) without having to sign up on the platform.
 - The person sharing a resource should provide a link to the resource (available on the dashboard) and then the key. When the viewer clicks on the link, they have to then enter the key to have access to the resource.
 
+# Endpoints
+- `/upload/` - A user uploads an encrypted resource. User has to be authenticated to perform this action. The uploaded file is encrypted, and The In response, they get an encryption key.
