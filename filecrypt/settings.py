@@ -30,6 +30,7 @@ DEBUG = env('DEBUG', default=True, cast=bool)
 split_env_str = lambda v: [s.strip() for s in v.split(',')]
 ALLOWED_HOSTS = env('ALLOWED_HOSTS', default='127.0.0.1,0.0.0.0,localhost', cast=split_env_str)
 
+AUTH_USER_MODEL = "accounts.User"
 
 # Application definition
 
@@ -128,3 +129,6 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = str(BASE_DIR / 'media')
