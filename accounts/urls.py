@@ -14,5 +14,6 @@ urlpatterns = [
     re_path('^auth/logout/?$', token_blacklist, name='api-logout'),
 
     re_path('^users/?$', UsersViewSet.as_view(LIST_CREATE), name='users-list-create'),
+    re_path('^users/me/?$', UsersViewSet.as_view(RETRIEVE_UPDATE_DESTROY), name='user-detail'),
     re_path('^users/(?P<pk>\d+)/?$', UsersViewSet.as_view(RETRIEVE_UPDATE_DESTROY), name='user-detail'),
 ]
