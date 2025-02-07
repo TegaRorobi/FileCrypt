@@ -2,7 +2,8 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from main.models import (
     EncryptedResource,
-    EncryptionKey)
+    EncryptionKey,
+    Business)
 from accounts.serializers import UserSerializer
 from utils.crypt import EncryptionManager
 
@@ -43,6 +44,7 @@ class EncryptedResourceCreateSerializer(EncryptedResourceSerializer):
             'file_content': {'read_only': False},
         }
 
+
 class EncryptionKeyForDecryptingResourceSerializer(serializers.Serializer):
     encryption_key = serializers.CharField(required=False)
 
@@ -58,4 +60,15 @@ class EncryptionKeySerializer(serializers.ModelSerializer):
             'value': {'read_only': True},
             'usage_count': {'read_only': True},
             'usage_limit': {'read_only': True},
+        }
+
+
+class BusinessSerializer(serializers.ModelSerializer):
+    manager_account_ = UserSerializer(source='manager_account', required=False, read_only=True)
+    class Meta:
+        model = Business
+        fields = '__all__'
+        extra_kwargs = {
+            'manager_account': {'read_only': True},
+            'manager_account_': {'read_only': True},
         }
