@@ -5,15 +5,18 @@ from django.http import FileResponse
 
 from main.models import (
     EncryptedResource,
-    EncryptionKey)
+    EncryptionKey,
+    Business,)
 from main.serializers import (
     EncryptedResourceSerializer,
     EncryptedResourceCreateSerializer,
     EncryptionKeyForDecryptingResourceSerializer,
-    EncryptionKeySerializer)
+    EncryptionKeySerializer,
+    BusinessSerializer,)
 from utils.crypt import EncryptionManager
 from cryptography.fernet import InvalidToken
-from django.core.exceptions import ObjectDoesNotExist
+from django.shortcuts import get_object_or_404
+from utils.permissions import IsSuperUser
 
 
 class EncryptedResourceViewSet(
@@ -24,8 +27,6 @@ class EncryptedResourceViewSet(
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin):
 
-    serializer_class = EncryptedResourceSerializer
-    permission_classes = [permissions.IsAuthenticated]
     # parser_classes = [parsers.FileUploadParser]
 
     def get_permissions(self):
@@ -94,3 +95,33 @@ class EncryptionKeyViewSet(viewsets.GenericViewSet):
         encryption_key = resource.encryption_keys.get()
         serializer = self.get_serializer(encryption_key)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class BusinessViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin):
+
+    serializer_class = BusinessSerializer
+
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return Business.objects.all()
+        else:
+            return self.request.user.businesses.all()
+
+    def get_permissions(self):
+        if self.action == 'list':
+            return [IsSuperUser()]
+        return [permissions.IsAuthenticated()]
+
+    def perform_create(self, serializer):
+        serializer.save(manager_account=self.request.user)
+
+    def get_object(self):
+        if not self.lookup_url_kwarg in self.kwargs:
+            return get_object_or_404(Business, manager_account=self.request.user)
+        return super().get_object()
