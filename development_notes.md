@@ -54,3 +54,25 @@ For added security, even if an encryption key is stolen, the encryption key woul
 
 # Endpoints
 - `/upload/` - A user uploads an encrypted resource. User has to be authenticated to perform this action. The uploaded file is encrypted, and The In response, they get an encryption key.
+
+
+
+When accessing an encrypted resource
+I'm still working out the logic for this, but what I'll do for now is that when I get a request asking for an encrypted resourc,
+I'll use the utils.EncryptionManager class to decrypt the resource, save it somewhere, and then provide a url to it where it can be viewed. Therefore, I'll return the url to the resource on my server as a response.
+
+
+# Integrating a KMS For Key Management
+
+- Take two users, User A and User B.
+- User A encrypts the resource, and gets an encryption key identifier from FileCrypt.
+- User B gets the key identifier from User A, and tries to decrypt the resource using that identifier.
+
+To get the Key identifier I'll send to User A, I'll make a request to the KMS with an ID for the data I'm encrypting, perhaps
+a database ID. KMS links this data ID with the Encryption key version, and KMS stores this mapping internally.
+
+When User B tries to decrypt the resource using the key identifier, I send a request again, to the KMS. I send the
+identifier and then the resource ID. KMS determines the Encyption Key version with the mapping, and provides the
+correct encryption key for decrypting the resource. I use that key, decrypt the resource, and make it available to user B.
+
+> KMS regularly rotates the actual encryption keys, and then uses a mapping to get the correct key version when I provide the resource's ID.
