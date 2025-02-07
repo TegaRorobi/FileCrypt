@@ -1,3 +1,96 @@
-from django.shortcuts import render
+from rest_framework import (
+    viewsets, mixins, permissions, status, decorators)
+from rest_framework.response import Response
+from django.http import FileResponse
 
-# Create your views here.
+from main.models import (
+    EncryptedResource,
+    EncryptionKey)
+from main.serializers import (
+    EncryptedResourceSerializer,
+    EncryptedResourceCreateSerializer,
+    EncryptionKeyForDecryptingResourceSerializer,
+    EncryptionKeySerializer)
+from utils.crypt import EncryptionManager
+from cryptography.fernet import InvalidToken
+from django.core.exceptions import ObjectDoesNotExist
+
+
+class EncryptedResourceViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin):
+
+    serializer_class = EncryptedResourceSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    # parser_classes = [parsers.FileUploadParser]
+
+    def get_permissions(self):
+        if self.action == 'decrypt_resource':
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
+
+    def get_serializer_class(self):
+        if self.action == 'decrypt_resource':
+            return EncryptionKeyForDecryptingResourceSerializer
+        if self.action == 'create':
+            return EncryptedResourceCreateSerializer
+        return EncryptedResourceSerializer
+
+    def get_queryset(self):
+        return self.request.user.uploaded_resources.all()
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save(uploader=self.request.user)
+        encryption_key = instance.encryption_keys.get()
+        headers = self.get_success_headers(serializer.data)
+        return Response({
+            **serializer.data,
+            'encryption_key':encryption_key.value
+        }, status=status.HTTP_201_CREATED, headers=headers)
+
+    @decorators.action(detail=True)
+    def decrypt_resource(self, request, *args, **kwargs):
+        resource = self.get_object()
+        encryption_key_value = request.data['encryption_key']
+
+        try:
+            decrypted_resource_url, decrypted_file_path, decrypted_data = EncryptionManager().decrypt_file(
+                input_file=resource.file_content,
+                encryption_key=encryption_key_value,
+            http_origin=request.META.get('HTTP_ORIGIN'))
+
+            # Usage tracking on an encryption key.
+            # encryption_key = EncryptionKey.objects.get(value=encryption_key_value)
+            # encryption_key.usage_count += 1
+            # if encryption_key.usage_count > encryption_key.usage_limit:
+            #     return Response({'message': 'Encryption Key Expired.'}, status=status.HTTP_400_BAD_REQUEST)
+            # encryption_key.save()
+        except InvalidToken or EncryptionKey.DoesNotExist:
+            return Response({'message': 'Invalid Encryption key for this resource.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        return Response({'url': decrypted_resource_url}, status=status.HTTP_200_OK)
+
+
+class EncryptionKeyViewSet(viewsets.GenericViewSet):
+
+    serializer_class = EncryptionKeySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return EncryptionKey.objects.get(owner=self.request.user)
+
+    def retrieve(self, request, *args, **kwargs):
+        resource_id = request.data['resource_id']
+        try:
+            resource = EncryptedResource.objects.get(id=resource_id)
+        except:
+            return Response({'message': 'Resource not found.'}, status=status.HTTP_404_NOT_FOUND)
+        encryption_key = resource.encryption_keys.get()
+        serializer = self.get_serializer(encryption_key)
+        return Response(serializer.data, status=status.HTTP_200_OK)
