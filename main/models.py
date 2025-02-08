@@ -121,6 +121,8 @@ class OrganisationMember(TimestampsModel):
         on_delete = models.CASCADE,
         null = False,
         blank = False)
+    is_organisation_superadmin = models.BooleanField(_('organisation superadmin?'), default=False)
+    is_organisation_admin = models.BooleanField(_('organisation admin?'), default=False)
     organisation_position = models.CharField(max_length = 100, null=True, blank=True)
 
 class ResourceAccess_Organisation(TimestampsModel):
@@ -182,6 +184,8 @@ class WorkspaceMember(TimestampsModel):
         on_delete = models.CASCADE,
         null = False,
         blank = False)
+    is_workspace_superadmin = models.BooleanField(_('workspace superadmin?'), default=False)
+    is_workspace_admin = models.BooleanField(_('workspace admin?'), default=False)
     workspace_position = models.CharField(max_length = 100, null=True, blank=True)
 
 class ResourceAccess_Workspace(TimestampsModel):
@@ -243,6 +247,8 @@ class TeamMember(TimestampsModel):
         on_delete = models.CASCADE,
         null = False,
         blank = False)
+    is_team_superadmin = models.BooleanField(_('team superadmin?'), default=False)
+    is_team_admin = models.BooleanField(_('team admin?'), default=False)
     team_position = models.CharField(max_length = 100, null=True, blank=True)
 
 class ResourceAccess_Team(TimestampsModel):
