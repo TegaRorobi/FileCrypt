@@ -121,6 +121,20 @@ class BusinessViewSet(
     def perform_create(self, serializer):
         serializer.save(manager_account=self.request.user)
 
+    """
+    If the manager account of a business is updated, there should be a countdown to the
+    transfer (about 3 days), and all users associated with the business should be notified of this change.
+
+    A notification also gets sent out when other fields are updated, but there's no countdown.
+
+    Smells like celery.
+    """
+    def update(self, request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    def partial_update(self, request, *args, **kwargs):
+        return super().partial_update(request, *args, **kwargs)
+
     def get_object(self):
         if not self.lookup_url_kwarg in self.kwargs:
             return get_object_or_404(Business, manager_account=self.request.user)

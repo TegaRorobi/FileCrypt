@@ -76,3 +76,24 @@ identifier and then the resource ID. KMS determines the Encyption Key version wi
 correct encryption key for decrypting the resource. I use that key, decrypt the resource, and make it available to user B.
 
 > KMS regularly rotates the actual encryption keys, and then uses a mapping to get the correct key version when I provide the resource's ID.
+
+
+### Updating certain fields on models
+
+A business has a manager account. The Business profile and the connnected User account (the "manager") together form a Business 
+account. If the manager account for a business is deleted, I have set it such that the manager account field on the business would
+be set to null on the Database. This is because a business might have lots of smaller structures and then it would delete
+everything else peradventure the manager account was deleted by accident.
+So how can a business set a new managerial account?
+- One idea is for a superuser to handle it. i.e, reconnecting the business to the requested user account.
+- The business account just acts as a profile, so no one can login in place of the business and set anything.
+The business account can also just be deleted altogether but this time with extra caution, warnings, and notifications to
+everyone in a grouping structure of that business.
+
+#### So here's my fix for this.
+I'll instead, schedule a deletion (about 7 days) and notify all members associated with the business.
+I would also add functionality for the manager to stop the deletion countdown. A superuser should also be able to step in,
+and stop the countdown if need be.
+> This way, I don't have to worry about having a business having a null manager account. And then, there's also proper prior notification.
+
+A similar countdown occurs when the manager transfers the managerial role to another user account.
