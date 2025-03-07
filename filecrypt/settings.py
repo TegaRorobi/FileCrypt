@@ -142,3 +142,15 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=2),
 }
+
+SWAGGER_SETTINGS = {
+    'LOGIN_URL': f'/admin/login',
+    'LOGOUT_URL': f'/admin/logout',
+    'SECURITY_DEFINITIONS': {
+        'Bearer': {
+            'type': 'apiKey',
+            'name': 'Authorization',
+            'in': 'header'
+        }
+    }
+}
