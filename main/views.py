@@ -123,24 +123,41 @@ class BusinessViewSet(
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin):
 
-    serializer_class = BusinessSerializer
+    def get_serializer_class(self):
+        url_name = resolve(self.request.path_info).url_name
+        if url_name in ['businesses-list-me']:
+            return BusinessSerializer2
+        return BusinessSerializer
 
     def get_queryset(self):
-        if self.request.user.is_superuser:
-            return Business.objects.all()
-        else:
+        url_name = resolve(self.request.path_info).url_name
+        if url_name in ['businesses-list', 'business-detail']:
+            if self.request.user.is_superuser:
+                return Business.objects.all()
+
+        elif url_name in ['businesses-list-managed', 'business-detail-managed']:
             return self.request.user.businesses.all()
 
+        elif url_name in ['businesses-list-me', 'business-detail-me']:
+            return Business.objects.filter(
+                organisations__workspaces__teams__member_profiles__user=self.request.user
+            ).distinct().prefetch_related(
+                Prefetch('organisations', queryset=Organisation.objects.all()),
+                Prefetch('organisations__workspaces', queryset=Workspace.objects.all()),
+                Prefetch('organisations__workspaces__teams', queryset=Team.objects.all()),
+                Prefetch('organisations__workspaces__teams__member_profiles', queryset=TeamMember.objects.all())
+            )
+
+        return QuerySet()
+
     def get_permissions(self):
-        if self.action == 'list':
-            return [IsSuperUser()]
         return [permissions.IsAuthenticated()]
 
     def perform_create(self, serializer):
         serializer.save(manager_account=self.request.user)
 
     """
-    If the manager account of a business is updated, there should be a countdown to the
+    If the manager account of a business is changed, there should be a countdown to the
     transfer (about 3 days), and all users associated with the business should be notified of this change.
 
     A notification also gets sent out when other fields are updated, but there's no countdown.
