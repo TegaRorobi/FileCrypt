@@ -85,4 +85,14 @@ class OrganisationSerializer(serializers.ModelSerializer):
             'business_': {'read_only': True},
         }
 
+
+class WorkspaceSerializer(serializers.ModelSerializer):
+    organisation_ = OrganisationSerializer(source='organisation', required=False, read_only=True)
+    class Meta:
+        model = Workspace
+        fields = '__all__'
+        extra_kwargs = {
+            'organisation_': {'read_only': True},
+        }
+
         
