@@ -1,22 +1,37 @@
 from rest_framework import (
-    viewsets, mixins, permissions, status, decorators)
+    viewsets, mixins, permissions, status, decorators
+)
 from rest_framework.response import Response
+from django.db.models import QuerySet, Prefetch
+from django.urls import resolve
 from django.http import FileResponse
+from django.shortcuts import get_object_or_404
 
 from main.models import (
     EncryptedResource,
     EncryptionKey,
-    Business,)
+    Business,
+    Organisation,
+    Workspace,
+    Team,
+    TeamMember)
 from main.serializers import (
     EncryptedResourceSerializer,
     EncryptedResourceCreateSerializer,
     EncryptionKeyForDecryptingResourceSerializer,
     EncryptionKeySerializer,
-    BusinessSerializer,)
+    BusinessSerializer,
+    OrganisationSerializer,
+    WorkspaceSerializer,
+    TeamSerializer)
+from utils.permissions import (
+    NotAllowed,
+    IsSuperUser,
+    IsOrganisationAdminOrSuperUser,
+    IsOrganisationMemberOrSuperUser)
 from utils.crypt import EncryptionManager
 from cryptography.fernet import InvalidToken
-from django.shortcuts import get_object_or_404
-from utils.permissions import IsSuperUser
+
 
 
 class EncryptedResourceViewSet(
@@ -64,14 +79,17 @@ class EncryptedResourceViewSet(
             decrypted_resource_url, decrypted_file_path, decrypted_data = EncryptionManager().decrypt_file(
                 input_file=resource.file_content,
                 encryption_key=encryption_key_value,
-            http_origin=request.META.get('HTTP_ORIGIN'))
+                http_origin=request.META.get('HTTP_ORIGIN')
+            )
 
             # Usage tracking on an encryption key.
-            # encryption_key = EncryptionKey.objects.get(value=encryption_key_value)
-            # encryption_key.usage_count += 1
-            # if encryption_key.usage_count > encryption_key.usage_limit:
-            #     return Response({'message': 'Encryption Key Expired.'}, status=status.HTTP_400_BAD_REQUEST)
-            # encryption_key.save()
+            encryption_key = EncryptionKey.objects.get(value=encryption_key_value)
+
+            encryption_key.usage_count += 1
+            if encryption_key.usage_count > encryption_key.usage_limit:
+                return Response({'message': 'Encryption Key Expired.'}, status=status.HTTP_400_BAD_REQUEST)
+            encryption_key.save()
+
         except InvalidToken or EncryptionKey.DoesNotExist:
             return Response({'message': 'Invalid Encryption key for this resource.'}, status=status.HTTP_401_UNAUTHORIZED)
 
