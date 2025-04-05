@@ -95,4 +95,13 @@ class WorkspaceSerializer(serializers.ModelSerializer):
             'organisation_': {'read_only': True},
         }
 
+
+class TeamSerializer(serializers.ModelSerializer):
+    workspace_ = WorkspaceSerializer(source='workspace', required=False, read_only=True)
+    class Meta:
+        model = Team
+        fields = '__all__'
+        extra_kwargs = {
+            'workspace_': {'read_only': True},
+        }
         
