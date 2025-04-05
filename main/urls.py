@@ -3,6 +3,7 @@ from main.views import (
     EncryptedResourceViewSet,
     EncryptionKeyViewSet,
     BusinessViewSet,
+    OrganisationViewSet,
 )
 from utils.aliases import *
 
@@ -37,7 +38,24 @@ business_endpoints = [
 ]
 
 
+
+organisation_endpoints = [
+    # A SuperUser or regular user creating an organisation account.
+    re_path('organisations/create/?$', OrganisationViewSet.as_view(CREATE), name='organisations-create'),
+
+    # A SuperUser listing, retrieving or deleting an organisation account.
+    re_path('organisations/?$', OrganisationViewSet.as_view(LIST), name='organisations-list'),
+    re_path('organisations/(?P<pk>\d+)/?$', OrganisationViewSet.as_view(RETRIEVE_UPDATE_DESTROY), name='organisation-detail'),
+
+    # A team member getting information about the organisation(s) they're a part of, with information
+    # of the workspaces, teams, down to the team member profiles which represent their user account.
+    re_path('organisations/me/?$', OrganisationViewSet.as_view(LIST), name='organisations-list-me'),
+    re_path('organisations/me/(?P<pk>\d+)/?$', OrganisationViewSet.as_view(RETRIEVE), name='organisation-detail-me'),
+]
+
+
 urlpatterns = [
     *encryption_endpoints,
     *business_endpoints,
+    *organisation_endpoints,
 ]
