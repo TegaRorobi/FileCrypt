@@ -3,7 +3,10 @@ from django.contrib.auth import get_user_model
 from main.models import (
     EncryptedResource,
     EncryptionKey,
-    Business)
+    Business,
+    Organisation,
+    Workspace,
+    Team)
 from accounts.serializers import UserSerializer
 from utils.crypt import EncryptionManager
 
@@ -69,6 +72,17 @@ class BusinessSerializer(serializers.ModelSerializer):
         model = Business
         fields = '__all__'
         extra_kwargs = {
-            'manager_account': {'read_only': True},
             'manager_account_': {'read_only': True},
         }
+
+
+class OrganisationSerializer(serializers.ModelSerializer):
+    business_ = BusinessSerializer(source='business', required=False, read_only=True)
+    class Meta:
+        model = Organisation
+        fields = '__all__'
+        extra_kwargs = {
+            'business_': {'read_only': True},
+        }
+
+        
