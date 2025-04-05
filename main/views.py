@@ -176,7 +176,39 @@ class BusinessViewSet(
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
-    def get_object(self):
-        if not self.lookup_url_kwarg in self.kwargs:
-            return get_object_or_404(Business, manager_account=self.request.user)
-        return super().get_object()
+
+class OrganisationViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin):
+
+    def get_serializer_class(self):
+        url_name = resolve(self.request.path_info).url_name
+        if url_name in ['organisations-list-me', 'organisation-detail-me']:
+            return OrganisationSerializer2
+        return OrganisationSerializer
+
+    def get_queryset(self):
+        url_name = resolve(self.request.path_info).url_name
+        if url_name in ['organisations-list', 'organisation-detail']:
+            if self.request.user.is_superuser:
+                return Organisation.objects.all()
+
+        elif url_name in ['organisations-list-me', 'organisation-detail-me']:
+            return Organisation.objects.filter(
+                workspaces__teams__member_profiles__user=self.request.user
+            ).distinct().prefetch_related(
+                Prefetch('workspaces', queryset=Workspace.objects.all()),
+                Prefetch('workspaces__teams', queryset=Team.objects.all()),
+                Prefetch('workspaces__teams__member_profiles', queryset=TeamMember.objects.all())
+            )
+
+        return QuerySet()
+
+    def get_permissions(self):
+        return [permissions.IsAuthenticated()]
+
+
