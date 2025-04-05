@@ -4,6 +4,7 @@ from main.views import (
     EncryptionKeyViewSet,
     BusinessViewSet,
     OrganisationViewSet,
+    WorkspaceViewSet,
 )
 from utils.aliases import *
 
@@ -54,8 +55,27 @@ organisation_endpoints = [
 ]
 
 
+
+workspace_endpoints = [
+    # A SuperUser or regular user creating a workspace account.
+    re_path('workspaces/create/?$', WorkspaceViewSet.as_view(CREATE), name='workspaces-create'),
+
+    # A SuperUser listing out, retrieving or deleting a workspace account.
+    re_path('workspaces/?$', WorkspaceViewSet.as_view(LIST), name='workspaces-list'),
+    re_path('workspaces/(?P<pk>\d+)/?$', WorkspaceViewSet.as_view(RETRIEVE_UPDATE_DESTROY), name='workspace-detail'),
+
+    # A team member getting information about the workspace(s) they're a part of, with information
+    # of the teams, down to the team member profiles which represent their user account.
+    re_path('workspaces/me/?$', WorkspaceViewSet.as_view(LIST), name='workspaces-list-me'),
+    re_path('workspaces/me/(?P<pk>\d+)/?$', WorkspaceViewSet.as_view(RETRIEVE), name='workspace-detail-me'),
+]
+
+
+
+
 urlpatterns = [
     *encryption_endpoints,
     *business_endpoints,
     *organisation_endpoints,
+    *workspace_endpoints,
 ]
