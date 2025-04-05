@@ -212,3 +212,37 @@ class OrganisationViewSet(
         return [permissions.IsAuthenticated()]
 
 
+class WorkspaceViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin):
+
+    def get_serializer_class(self):
+        url_name = resolve(self.request.path_info).url_name
+        if url_name in ['workspaces-list-me', 'workspace-detail-me']:
+            return WorkspaceSerializer2
+        return WorkspaceSerializer
+
+    def get_queryset(self):
+        url_name = resolve(self.request.path_info).url_name
+        if url_name in ['workspaces-list', 'workspace-detail']:
+            if self.request.user.is_superuser:
+                return Workspace.objects.all()
+
+        elif url_name in ['workspaces-list-me', 'workspace-detail-me']:
+            return Workspace.objects.filter(
+                teams__member_profiles__user=self.request.user
+            ).distinct().prefetch_related(
+                Prefetch('teams', queryset=Team.objects.all()),
+                Prefetch('teams__member_profiles', queryset=TeamMember.objects.all())
+            )
+
+        return QuerySet()
+
+    def get_permissions(self):
+        return [permissions.IsAuthenticated()]
+
+
