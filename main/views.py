@@ -246,3 +246,34 @@ class WorkspaceViewSet(
         return [permissions.IsAuthenticated()]
 
 
+class TeamViewSet(
+    viewsets.GenericViewSet,
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin):
+
+    def get_serializer_class(self):
+        url_name = resolve(self.request.path_info).url_name
+        if url_name in ['teams-list-me', 'team-detail-me']:
+            return TeamSerializer2
+        return TeamSerializer
+
+    def get_queryset(self):
+        url_name = resolve(self.request.path_info).url_name
+        if url_name in ['teams-list', 'team-detail']:
+            if self.request.user.is_superuser:
+                return Team.objects.all()
+
+        elif url_name in ['teams-list-me', 'team-detail-me']:
+            return Team.objects.filter(
+                member_profiles__user=self.request.user
+            ).distinct().prefetch_related(
+                Prefetch('member_profiles', queryset=TeamMember.objects.all()),
+            )
+
+        return QuerySet()
+
+    def get_permissions(self):
+        return [permissions.IsAuthenticated()]
