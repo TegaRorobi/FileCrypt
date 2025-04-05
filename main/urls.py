@@ -5,6 +5,7 @@ from main.views import (
     BusinessViewSet,
     OrganisationViewSet,
     WorkspaceViewSet,
+    TeamViewSet
 )
 from utils.aliases import *
 
@@ -72,10 +73,25 @@ workspace_endpoints = [
 
 
 
+team_endpoints = [
+    # A SuperUser or regular user creating an team account.
+    re_path('teams/create/?$', TeamViewSet.as_view(CREATE), name='teams-create'),
+
+    # A SuperUser listing out or retrieving or deleting a team account.
+    re_path('teams/?$', TeamViewSet.as_view(LIST), name='teams-list'),
+    re_path('teams/(?P<pk>\d+)/?$', TeamViewSet.as_view(RETRIEVE_UPDATE_DESTROY), name='team-detail'),
+
+    # A team member getting information about the team(s) they're a part of, with information
+    # of the team member profiles which represent their user account.
+    re_path('teams/me/?$', TeamViewSet.as_view(LIST), name='teams-list-me'),
+    re_path('teames/me/(?P<pk>\d+)/?$', TeamViewSet.as_view(RETRIEVE), name='team-detail-me'),
+]
+
 
 urlpatterns = [
     *encryption_endpoints,
     *business_endpoints,
     *organisation_endpoints,
     *workspace_endpoints,
+    *team_endpoints
 ]
