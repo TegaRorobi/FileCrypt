@@ -4,15 +4,21 @@ from main.models import (
     Business,
     Organisation,
     Workspace,
-    Team)
+    Team,
+    TeamMember)
 from accounts.serializers import UserSerializer
 
 
 User = get_user_model()
 
 
+class TeamMemberSerializer2(serializers.ModelSerializer):
+    class Meta:
+        model = TeamMember
+        fields = '__all__'
 
 class TeamSerializer2(serializers.ModelSerializer):
+    member_profiles = TeamMemberSerializer2(many=True, required=False, read_only=True)
     class Meta:
         model = Team
         fields = '__all__'
