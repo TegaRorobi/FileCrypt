@@ -37,6 +37,7 @@ from utils.permissions import (
     IsOrganisationMemberOrSuperUser)
 from utils.crypt import EncryptionManager
 from cryptography.fernet import InvalidToken
+from io import BytesIO
 
 
 
@@ -82,7 +83,7 @@ class EncryptedResourceViewSet(
         encryption_key_value = request.data['encryption_key']
 
         try:
-            decrypted_resource_url, decrypted_file_path, decrypted_data = EncryptionManager().decrypt_file(
+            decrypted_file_name, decrypted_resource_url, decrypted_file_path, decrypted_data = EncryptionManager().decrypt_file(
                 input_file=resource.file_content,
                 encryption_key=encryption_key_value,
                 http_origin=request.META.get('HTTP_ORIGIN')
@@ -96,10 +97,18 @@ class EncryptedResourceViewSet(
                 return Response({'message': 'Encryption Key Expired.'}, status=status.HTTP_400_BAD_REQUEST)
             encryption_key.save()
 
-        except InvalidToken or EncryptionKey.DoesNotExist:
+        except (InvalidToken or EncryptionKey.DoesNotExist):
             return Response({'message': 'Invalid Encryption key for this resource.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-        return Response({'url': decrypted_resource_url}, status=status.HTTP_200_OK)
+        except ValueError:
+            return Response({'message': f'Encryption key must be 32 url-safe base64-encoded bytes.\
+                                          Got \'{encryption_key_value}\''}, status=status.HTTP_400_BAD_REQUEST)
+
+        # return Response({'url': decrypted_resource_url}, status=status.HTTP_200_OK)
+        buffer = BytesIO(decrypted_data)
+        response = FileResponse(buffer, content_type='application/octet-stream')
+        response['Content-Disposition'] = f'inline; filename="{decrypted_file_name}"'
+        return response
 
 
 class EncryptionKeyViewSet(viewsets.GenericViewSet):
